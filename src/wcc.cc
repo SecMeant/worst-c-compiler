@@ -4,9 +4,11 @@
 #include <fmt/format.h>
 
 #include "mipc/file.h"
+#include "nfa.h"
 #include "tokenizer.h"
 
 using namespace wcc;
+using namespace wcc::regex;
 using namespace mipc::utils;
 using mipc::finbuf;
 
@@ -27,17 +29,6 @@ using mipc::finbuf;
 //  print_trie(*trie.root);
 //}
 
-constexpr static const char* TOKENID_STR[] = {
-  "PAREN_OPEN", "PAREN_CLOSE", "BRACKET_OPEN", "BRACKET_CLOSE", "OP_NEG",
-  "OP_NEQ",     "OP_MOD",      "OP_XOR",       "OP_LOGIC_AND",  "OP_ANDEQ",
-  "OP_AND",     "OP_LOGIC_OR", "OP_OREQ",      "OP_OR",         "OP_MUL",
-  "OP_MULEQ",   "OP_DIVEQ",    "OP_DIV",       "OP_MINUS",      "OP_ACCESS",
-  "OP_PLUS",    "OP_EQ",       "BLOCK_BEGIN",  "BLOCK_END",     "SEMICOLON",
-  "COLON",      "COMMA",       "NAMESPACE",    "SINGLE_QUOTE",  "DOUBLE_QUOTE",
-  "OP_LS",      "OP_LSE",      "OP_GR",        "OP_GRE",        "OP_DOT",
-  "IDENTIFIER", "END",
-};
-
 void
 print(Token t)
 {
@@ -51,7 +42,7 @@ usage(int argc, char** argv)
 {}
 
 int
-main(int argc, char** argv)
+tokenizer_main(int argc, char** argv)
 {
   if (argc != 2) {
     usage(argc, argv);
@@ -66,4 +57,14 @@ main(int argc, char** argv)
     token = tokenizer.get();
     print(token);
   } while (token.id != TOKENID::END);
+
+  return 0;
+}
+
+int
+main(int argc, char** argv)
+{
+  return tokenizer_main(argc, argv);
+  nfa n;
+  n.append('a');
 }

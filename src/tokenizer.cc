@@ -2,11 +2,14 @@
 
 #include "tokenizer.h"
 
+#include <fmt/format.h>
+
 namespace wcc {
 
-constexpr static bool is_identifier(char c)
+constexpr static bool
+is_identifier(char c)
 {
-  switch(c) {
+  switch (c) {
     case '0' ... '9':
     case '_' ... '`':
       // If we include '`' then the range is continuous, thus faster parsing
@@ -18,37 +21,50 @@ constexpr static bool is_identifier(char c)
   }
 }
 
-Token
-Tokenizer::get()
+void
+Tokenizer::consume_ws()
 {
-  // ASSUME that current points at character not yet parsed
-  
-  Token ret;
   char c;
 
-skip_whitespace:
-
-  do {
-    if (current == end) {
-      ret.id = TOKENID::END;
-      return ret;
-    }
+  while (1) {
+    if (current == end)
+      return;
 
     c = *current;
-    ++current;
-    ++pos;
+
+    if (!std::isspace(c))
+      return;
 
     if (c == '\n') {
       ++line;
       pos = 0;
     }
-  } while (std::isspace(c));
 
+    ++current;
+    ++pos;
+  }
+}
+
+Token
+Tokenizer::get()
+{
+  // ASSUME that current points at character not yet parsed
+  Token ret;
+  char  c;
+
+  ret.id   = TOKENID::END;
   ret.line = line;
   ret.pos  = pos;
 
+  if (current == end)
+    return ret;
+
   auto next = [](DataViewType current) { return *(current + 1); };
 
+match_token:
+
+  c = *current;
+  ++current;
   switch (c) {
     case '(':
       ret.id = TOKENID::PAREN_OPEN;
@@ -123,10 +139,10 @@ skip_whitespace:
           break;
         case '/':
           // Endline might be escaped
-          // TODO(holz) optimize by combining this as read and check on uint16
           while (next(current) != '\n' && *current != '\\')
             ++current;
-          goto skip_whitespace;
+          consume_ws();
+          goto match_token;
         default:
           ret.id = TOKENID::OP_DIV;
       }
@@ -198,19 +214,20 @@ skip_whitespace:
     default:
       ret.id    = TOKENID::IDENTIFIER;
       ret.value = "";
-      ret.value += c;
 
-      for(;;) {
+      for (;;) {
+        ret.value += c;
+
         c = *current;
 
         if (!is_identifier(c) || current == end)
           break;
 
-        ret.value += c;
         ++current;
       }
   }
 
+  consume_ws();
   return ret;
 }
 
