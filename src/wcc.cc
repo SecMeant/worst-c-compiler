@@ -4,16 +4,21 @@
 #include <fmt/format.h>
 
 #include "mipc/file.h"
-#include "nfa.h"
+//#include "ahocorasick.h"
+//#include "nfa.h"
 #include "tokenizer.h"
 
 using namespace wcc;
-using namespace wcc::regex;
+//using namespace wcc::regex;
 using namespace mipc::utils;
 using mipc::finbuf;
 
-// int
-// trie_main(int argc, char **argv)
+void
+usage(int argc, char** argv)
+{}
+
+//int
+//trie_main(int argc, char **argv)
 //{
 //  if (argc < 2) {
 //    puts("BADARG");
@@ -27,6 +32,8 @@ using mipc::finbuf;
 //
 //  trie.fill_fallbacks();
 //  print_trie(*trie.root);
+//
+//  return 0;
 //}
 
 void
@@ -36,10 +43,6 @@ print(Token t)
              TOKENID_STR[mipc::utils::underlay_cast(t.id)],
              t.value);
 }
-
-void
-usage(int argc, char** argv)
-{}
 
 int
 tokenizer_main(int argc, char** argv)
@@ -65,6 +68,7 @@ int
 main(int argc, char** argv)
 {
   return tokenizer_main(argc, argv);
-  nfa n;
-  n.append('a');
+  //return trie_main(argc, argv);
+  //nfa n;
+  //n.append('a');
 }

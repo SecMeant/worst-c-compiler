@@ -1,5 +1,6 @@
 #pragma once
 #include "tokenizer.h"
+#include "ast.h"
 
 /* GRAMMAR
  *
@@ -15,6 +16,13 @@
  * VarDecl: TYPE IDENTIFIER SEMICOLON
  *
  * TYPE: IDENTIFIER {i8, i32, i64}
+ *
+ * BLOCK: { STMTS }
+ *
+ * STMTS: STMT STMTS | STMT
+ *
+ * EXPR: E OP EXPR | E
+ *
  */
 
 namespace wcc {
@@ -24,6 +32,8 @@ struct Parser
   Parser(Ts&&... args)
     : tokenizer(std::forward<Ts>(args)...)
   {}
+
+  AST buildAST();
 
   Tokenizer tokenizer;
 };

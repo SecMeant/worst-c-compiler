@@ -11,6 +11,8 @@
 namespace wcc {
 
 using TokenDataType = char;
+using TokenMatchType = std::string;
+using TokenMatchRefType = const std::string*;
 
 enum class TOKENID
 {
@@ -68,6 +70,7 @@ public:
     , fallback(nullptr)
     , lookup()
     , identifier(identifier)
+    , match(nullptr)
   {}
 
   ~TrieNode() = default;
@@ -128,6 +131,11 @@ public:
     this->fallback = node;
   }
 
+  void set_match(TokenMatchRefType t)
+  {
+    match = t;
+  }
+
   bool is_final()
   {
     return this->lookup.size() == 0;
@@ -137,6 +145,30 @@ public:
   NodeRefType fallback;
   LookupType  lookup;
   IdentifierType identifier;
+  TokenMatchType match;
+};
+
+struct TrieWalker
+{
+  TrieWalker (const TrieNode *n)
+  : current(n) {}
+
+  bool step(TokenDataType t)
+  {
+    current = current.find(t);
+    return current != nullptr;
+  }
+
+  const std::string*
+  matched()
+  {
+    if (current == nullptr)
+      return nullptr;
+
+    return current->match;
+  }
+
+  const TrieNode *current;
 };
 
 struct Trie
@@ -147,7 +179,7 @@ struct Trie
   using KeywordRefType       = const std::string&;
   using KeywordCIteratorType = std::string::const_iterator;
 
-  void create_branch(KeywordCIteratorType begin,
+  NodeRefType create_branch(KeywordCIteratorType begin,
                      KeywordCIteratorType end,
                      NodeRefType          at)
   {
@@ -156,6 +188,8 @@ struct Trie
       at              = at->new_child(identifier);
       ++begin;
     }
+
+    return at;
   }
 
   void add_keyword(KeywordRefType kw)
@@ -173,8 +207,8 @@ struct Trie
 
       if (child == nullptr) {
         current_node = current_node->new_child(identifier);
-        create_branch(start, end, current_node);
-        return;
+        current_node = create_branch(start, end, current_node);
+        break;
       }
 
       current_node = child;
