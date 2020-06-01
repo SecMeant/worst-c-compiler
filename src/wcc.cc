@@ -6,10 +6,11 @@
 #include "mipc/file.h"
 //#include "ahocorasick.h"
 //#include "nfa.h"
+#include "token_format.h"
 #include "tokenizer.h"
 
 using namespace wcc;
-//using namespace wcc::regex;
+// using namespace wcc::regex;
 using namespace mipc::utils;
 using mipc::finbuf;
 
@@ -17,8 +18,8 @@ void
 usage(int argc, char** argv)
 {}
 
-//int
-//trie_main(int argc, char **argv)
+// int
+// trie_main(int argc, char **argv)
 //{
 //  if (argc < 2) {
 //    puts("BADARG");
@@ -36,14 +37,6 @@ usage(int argc, char** argv)
 //  return 0;
 //}
 
-void
-print(Token t)
-{
-  fmt::print(t.id == TOKENID::IDENTIFIER ? "id: {} \"{}\"\n" : "id: {}\n",
-             TOKENID_STR[mipc::utils::underlay_cast(t.id)],
-             t.value);
-}
-
 int
 tokenizer_main(int argc, char** argv)
 {
@@ -58,7 +51,7 @@ tokenizer_main(int argc, char** argv)
 
   do {
     token = tokenizer.get();
-    print(token);
+    fmt::print("{}\n", token);
   } while (token.id != TOKENID::END);
 
   return 0;
@@ -68,7 +61,7 @@ int
 main(int argc, char** argv)
 {
   return tokenizer_main(argc, argv);
-  //return trie_main(argc, argv);
-  //nfa n;
-  //n.append('a');
+  // return trie_main(argc, argv);
+  // nfa n;
+  // n.append('a');
 }
