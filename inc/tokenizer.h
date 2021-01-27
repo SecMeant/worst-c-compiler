@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "token.h"
 
@@ -25,10 +26,14 @@ struct Tokenizer
     , line(0)
   {}
 
+  Tokenizer(const Tokenizer &other) = default;
+
   void consume_ws();
 
   Token get();
-  Token peek() { return Tokenizer(*this).get(); }
+  Token peek() const { return Tokenizer(*this).get(); }
+
+  inline static std::vector<PositionType> breakpoints;
 };
 
 } // namespace wcc
