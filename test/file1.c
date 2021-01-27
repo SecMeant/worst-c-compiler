@@ -1,12 +1,13 @@
 struct my_struct {
-	int a;
-	int b;
+	i32 a;
+	i32 b;
 };
 
-float func(int a, double b) {
-	return ((double) a) + b;
+f32 func(i32 a, f64 b) {
+	u32 c;
+	f64 d;
 }
 
-int main() {
-	float b;
+i32 main() {
+	f32 b;
 }

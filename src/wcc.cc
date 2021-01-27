@@ -2,12 +2,17 @@
 #include <map>
 
 #include <fmt/format.h>
+#include <spdlog/cfg/env.h>
+#include <spdlog/spdlog.h>
 
 #include "mipc/file.h"
 //#include "ahocorasick.h"
 //#include "nfa.h"
 #include "token_format.h"
 #include "tokenizer.h"
+#include "parser.h"
+
+#include "ast_format.h"
 
 using namespace wcc;
 // using namespace wcc::regex;
@@ -37,6 +42,8 @@ usage(int argc, char** argv)
 //  return 0;
 //}
 
+AST ast;
+
 int
 tokenizer_main(int argc, char** argv)
 {
@@ -47,12 +54,14 @@ tokenizer_main(int argc, char** argv)
 
   finbuf    f(argv[1]);
   Tokenizer tokenizer(f.begin(), f.size());
+  Parser    parser(tokenizer);
   Token     token;
 
-  do {
-    token = tokenizer.get();
-    fmt::print("{}\n", token);
-  } while (token.id != TOKENID::END);
+  Tokenizer::breakpoints.emplace_back(2);
+
+  ast = parser.buildAST();
+
+  print_ast(ast);
 
   return 0;
 }
@@ -60,6 +69,7 @@ tokenizer_main(int argc, char** argv)
 int
 main(int argc, char** argv)
 {
+  spdlog::cfg::load_env_levels();
   return tokenizer_main(argc, argv);
   // return trie_main(argc, argv);
   // nfa n;

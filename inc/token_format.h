@@ -1,3 +1,5 @@
+#pragma once
+
 #include "token.h"
 #include <fmt/format.h>
 #include <mipc/utils.h>

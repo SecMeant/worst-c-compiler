@@ -1,10 +1,17 @@
 #include <cctype>
 
+#include "token_format.h"
 #include "tokenizer.h"
+#include "util.h"
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 namespace wcc {
+
+static void
+breakpoint()
+{}
 
 constexpr static bool
 is_identifier(char c)
@@ -40,6 +47,10 @@ Tokenizer::consume_ws()
       pos = 0;
     }
 
+    if (std::find(std::begin(breakpoints), std::end(breakpoints), line) !=
+        std::end(breakpoints))
+      breakpoint();
+
     ++current;
     ++pos;
   }
@@ -51,6 +62,8 @@ Tokenizer::get()
   // ASSUME that current points at character not yet parsed
   Token ret;
   char  c;
+
+  OnBlockExit([&ret] { spdlog::debug("{}", ret); });
 
   ret.id   = TOKENID::END;
   ret.line = line;
