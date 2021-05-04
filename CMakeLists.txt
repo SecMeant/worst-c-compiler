@@ -11,6 +11,8 @@ pkg_check_modules(mipc REQUIRED mipc>0.19)
 set(SRC_DIR src)
 set(INC_DIR inc)
 
+set(CMAKE_CXX_FLAGS "-Wno-c99-designator")
+
 file(GLOB_RECURSE SRC_FILES_CXX ${SRC_DIR}/*.cc)
 
 add_executable(wcc ${SRC_FILES_CXX})
