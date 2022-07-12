@@ -97,6 +97,53 @@ struct fmt::formatter<wcc::AstFunctionCall>
 };
 
 template<>
+struct fmt::formatter<wcc::AstStmt>
+{
+  constexpr auto parse(format_parse_context& ctx)
+  {
+    const auto it = ctx.begin(), end = ctx.end();
+    if (it != end && *it != '}')
+      throw format_error("invalid format");
+    return it;
+  }
+
+  template<typename FormatContext>
+  auto format(const wcc::ASTNode::ValueStorage& value, FormatContext& ctx)
+  {
+    auto& aststmt = std::get<wcc::AstStmt>(value);
+
+    if (aststmt.type == wcc::StmtType::varref) {
+      // clang-format off
+      return format_to(ctx.out(),
+                       "<" COLOR_ID "ASTStmt" COLOR_RESET ": "
+                       COLOR_FIELD "type" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ", "
+                       COLOR_FIELD "value" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ">",
+                       wcc::STMT_TYPE_STR[underlay_cast(aststmt.type)], 
+                       std::get<wcc::AstSymRef>(aststmt.value));
+      // clang-format on
+    } else if (aststmt.type == wcc::StmtType::call) {
+      // clang-format off
+      return format_to(ctx.out(),
+                       "<" COLOR_ID "ASTStmt" COLOR_RESET ": "
+                       COLOR_FIELD "type" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ", "
+                       COLOR_FIELD "value" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ">",
+                       wcc::STMT_TYPE_STR[underlay_cast(aststmt.type)], 
+                       std::get<wcc::AstFunctionCall>(aststmt.value));
+      // clang-format on
+    } else if (aststmt.type == wcc::StmtType::ret) {
+      // clang-format off
+      return format_to(ctx.out(),
+                       "<" COLOR_ID "ASTStmt" COLOR_RESET ": "
+                       COLOR_FIELD "type" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET,
+                       wcc::STMT_TYPE_STR[underlay_cast(aststmt.type)]);
+      // clang-format on
+    }
+
+    return format_to(ctx.out(), "???");
+  }
+};
+
+template<>
 struct fmt::formatter<wcc::ASTNode::ValueStorage>
 {
   constexpr auto parse(format_parse_context& ctx)
@@ -146,26 +193,8 @@ struct fmt::formatter<wcc::ASTNode::ValueStorage>
     } else if (std::holds_alternative<wcc::AstStmt>(value)) {
 
       auto& aststmt = std::get<wcc::AstStmt>(value);
+      return format_to(ctx.out(), "{}", aststmt);
 
-      if (aststmt.type == wcc::StmtType::varref) {
-        // clang-format off
-        return format_to(ctx.out(),
-                         "<" COLOR_ID "ASTStmt" COLOR_RESET ": "
-                         COLOR_FIELD "type" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ", "
-                         COLOR_FIELD "value" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ">",
-                         wcc::STMT_TYPE_STR[underlay_cast(aststmt.type)], 
-                         std::get<wcc::AstSymRef>(aststmt.value));
-        // clang-format on
-      } else if (aststmt.type == wcc::StmtType::call) {
-        // clang-format off
-        return format_to(ctx.out(),
-                         "<" COLOR_ID "ASTStmt" COLOR_RESET ": "
-                         COLOR_FIELD "type" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ", "
-                         COLOR_FIELD "value" COLOR_RESET "=" COLOR_VALUE "{}" COLOR_RESET ">",
-                         wcc::STMT_TYPE_STR[underlay_cast(aststmt.type)], 
-                         std::get<wcc::AstFunctionCall>(aststmt.value));
-        // clang-format on
-      }
     }
 
     return format_to(ctx.out(), "???");

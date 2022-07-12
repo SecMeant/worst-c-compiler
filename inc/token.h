@@ -1,7 +1,9 @@
 #pragma once
 
-#include <mipc/utils.h>
+#include <cstdint>
 #include <string>
+
+#include <mipc/utils.h>
 
 #include <map>
 

@@ -1,10 +1,10 @@
 #include "parser.h"
 #include "ast.h"
-#include "token.h"
 #include "ast_format.h"
+#include "token.h"
 
-#include <variant>
 #include <optional>
+#include <variant>
 
 #include <spdlog/spdlog.h>
 
@@ -156,6 +156,7 @@ parse_func_params(Tokenizer& tokenizer, ASTNode& node)
 
   return true;
 }
+
 static bool
 parse_code_block(Tokenizer& tokenizer, ASTNode& node);
 
@@ -228,18 +229,6 @@ is_stdop(const Token token)
   return false;
 }
 
-static bool
-is_function_call(Token token)
-{
-  return is_stdop(token) || token.id == TOKENID::PAREN_OPEN;
-}
-
-static bool
-is_at_function_call(const Tokenizer& t)
-{
-  return is_function_call(t.peek());
-}
-
 static std::optional<std::string>
 get_function_symbol_name(Token t)
 {
@@ -291,7 +280,8 @@ parse_statement_list(Tokenizer& tokenizer, ASTNode& node)
       return false;
     }
 
-    call.args.emplace_back(AstSymRef{ .name = tok.value });
+    call.args.emplace_back(AstStmt{ .type  = StmtType::varref,
+                                    .value = AstSymRef{ .name = tok.value } });
 
     tok = tokenizer.get();
 
@@ -308,8 +298,9 @@ parse_statement_list(Tokenizer& tokenizer, ASTNode& node)
   return true;
 }
 
+// TODO: inline this manually, it doesnt make sense as a separate function.
 static std::optional<SymbolName>
-parse_statement_symbol(Tokenizer& tokenizer, ASTNode& node)
+parse_statement_symbol(Tokenizer& tokenizer)
 {
   Token symtok = tokenizer.get();
   if (symtok.id != TOKENID::IDENTIFIER)
@@ -318,25 +309,119 @@ parse_statement_symbol(Tokenizer& tokenizer, ASTNode& node)
   return SymbolName(symtok.value);
 }
 
+static size_t
+get_precedence(const Token t)
+{
+  switch(t.id) {
+    default:
+      return 0;
+  }
+}
+
+static unsigned
+get_operator_precedence(Token t)
+{
+  if (t.id == TOKENID::OP_MUL)
+    return 1;
+
+  return 0;
+}
+
+static bool
+maybe_fix_precedence_(ASTNode& opnode)
+{
+  auto& this_stmt = std::get<AstStmt>(opnode.value);
+
+  if (this_stmt.type != StmtType::call)
+    return true;
+
+  auto& this_opcall = std::get<AstFunctionCall>(this_stmt.value);
+
+  if (!is_stdop(this_opcall.from_token))
+    return true;
+
+  auto& rhs_stmt = this_opcall.args.back();
+
+  if (rhs_stmt.type != StmtType::call)
+    return true;
+
+  auto& rhs_opcall = std::get<AstFunctionCall>(rhs_stmt.value);
+
+  if (!is_stdop(rhs_opcall.from_token))
+    return true;
+
+  if (get_operator_precedence(this_opcall.from_token) <=
+      get_operator_precedence(rhs_opcall.from_token))
+    return true;
+
+  if (rhs_opcall.args.size() != 2) {
+    spdlog::critical("Internal error: we expected stdop to have 2 args");
+    return false;
+  }
+
+  std::swap(rhs_opcall.args.front(), rhs_opcall.args.back());
+  AstStmt rhs_of_rhs = std::move(rhs_opcall.args.back());
+  rhs_opcall.args.pop_back();
+
+  AstStmt rhs_of_this = std::move(this_opcall.args.back());
+  this_opcall.args.pop_back();
+
+  std::swap(this_stmt, rhs_of_this);
+
+  // Function calls (std::variants) of the statement struct just got swapped.
+  // We have to retake the value because It changed (we move-assigned variants).
+  // We reassign the references by shadowing
+  {
+    auto& this_opcall = std::get<AstFunctionCall>(this_stmt.value);
+    auto& rhs_opcall  = std::get<AstFunctionCall>(rhs_of_this.value);
+
+    rhs_opcall.args.emplace_back(std::move(rhs_of_rhs));
+    this_opcall.args.emplace_back(std::move(rhs_of_this));
+  }
+
+  return true;
+}
+
+/*
+ * Statement grammar:
+ *
+ * stmt: sym
+ * stmt: sym '(' arglist ')'
+ * stmt: stmt op stmt    [Note, translated to: op(stmt, stmt)]
+ * stmt: stmt ';'
+ * stmt: 'return' stmt
+ *
+ * arglist: stmt
+ * arglist: stmt ',' stmt
+ *
+ */
 static bool
 parse_statement(Tokenizer& tokenizer, ASTNode& node)
 {
-  ASTNode& stmt_node = node.add(ASTID::stmt);
-  stmt_node.value    = AstStmt();
-  AstStmt& stmt      = std::get<AstStmt>(stmt_node.value);
+  ASTNode& this_node = node.add(ASTID::stmt);
+  this_node.value    = AstStmt();
+  AstStmt& stmt      = std::get<AstStmt>(this_node.value);
 
   std::optional<SymbolName> opt_sym;
-  if (opt_sym = parse_statement_symbol(tokenizer, node); !opt_sym.has_value()) {
+  if (opt_sym = parse_statement_symbol(tokenizer); !opt_sym.has_value()) {
     return false;
+  }
+
+  spdlog::debug("Parsing symbol: {}", opt_sym.value());
+
+  if (opt_sym.value() == "return") {
+    stmt.type = StmtType::ret;
+    return parse_statement(tokenizer, this_node);
   }
 
   if (tokenizer.peek().id == TOKENID::PAREN_OPEN) {
     tokenizer.get();
 
     stmt.type  = StmtType::call;
-    stmt.value = AstFunctionCall{ .name = opt_sym.value() };
+    stmt.value = AstFunctionCall{ .name       = opt_sym.value(),
+                                  .from_token = TOKENID::IDENTIFIER };
 
-    if (!parse_statement_list(tokenizer, stmt_node))
+    if (!parse_statement_list(tokenizer, this_node))
       return false;
   } else {
     stmt.type  = StmtType::varref;
@@ -344,30 +429,52 @@ parse_statement(Tokenizer& tokenizer, ASTNode& node)
   }
 
   if (is_stdop(tokenizer.peek())) {
-    Token optok = tokenizer.get();
+    const Token optok = tokenizer.get();
+
+    SymbolName func_name = STDOP_FUNC_STR[underlay_cast(optok.id)];
 
     ASTNode opnode(ASTID::stmt);
     opnode.value = AstStmt();
 
-    AstStmt& stmt_rhs = std::get<AstStmt>(opnode.value);
-    stmt_rhs.type     = StmtType::call;
-    stmt_rhs.value    = AstFunctionCall();
+    AstStmt& opnode_stmt = std::get<AstStmt>(opnode.value);
+    opnode_stmt.type     = StmtType::call;
+    opnode_stmt.value =
+      AstFunctionCall{ .name = std::move(func_name), .from_token = optok };
 
-    AstFunctionCall& astcall = std::get<AstFunctionCall>(stmt_rhs.value);
-    astcall.name             = STDOP_FUNC_STR[underlay_cast(optok.id)];
+    auto& opnode_call = std::get<AstFunctionCall>(opnode_stmt.value);
+    opnode_call.args.emplace_back(stmt);
 
-    // Rotate tree because we found stdop after func call
-    ASTNode& stmt_node_reloc = opnode.add(ASTID::stmt);
-    stmt_node_reloc          = std::move(stmt_node);
-    stmt_node                = std::move(opnode);
+    // TODO: remove node as a arg to parse_statement so we dont have to do this.
+    ASTNode node_for_rhs;
 
-    if (tokenizer.peek().id != TOKENID::SEMICOLON)
-      return parse_statement(tokenizer, stmt_node);
+    if (!parse_statement(tokenizer, node_for_rhs))
+      return false;
+
+    if (node_for_rhs.nodes.size() != 1) {
+      spdlog::critical(
+        "Internal error: We expect parsing rhs of stdop to get only one child");
+      return false;
+    }
+
+    auto &rhs_stmt = std::get<AstStmt>(node_for_rhs.nodes[0]->value);
+
+    opnode_call.args.emplace_back(std::move(rhs_stmt));
+
+    // Rotate tree because we found stdop after identifier.
+    // The identifier should be the lhs arg.
+    std::swap(this_node, opnode);
+
+    maybe_fix_precedence_(this_node);
+
+    return true;
   }
 
-  if (tokenizer.peek().id == TOKENID::SEMICOLON)
-    tokenizer.get();
+  if (tokenizer.peek().id != TOKENID::SEMICOLON) {
+    spdlog::error("Syntax error: missing semicolon?");
+    return false;
+  }
 
+  tokenizer.get();
   return true;
 }
 
@@ -507,4 +614,5 @@ Parser::buildAST()
 
   return ast;
 }
+
 }

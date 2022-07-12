@@ -1,8 +1,10 @@
 #pragma once
 
-#include "token.h"
 #include <fmt/format.h>
+
 #include <mipc/utils.h>
+
+#include "token.h"
 
 template<>
 struct fmt::formatter<wcc::Token>

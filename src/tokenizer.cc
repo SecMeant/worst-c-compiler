@@ -11,7 +11,9 @@ namespace wcc {
 
 static void
 breakpoint()
-{}
+{
+  __asm__ __volatile__("int3\n");
+}
 
 constexpr static bool
 is_identifier(char c)

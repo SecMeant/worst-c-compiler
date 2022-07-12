@@ -5,8 +5,11 @@
 #include <variant>
 #include <vector>
 #include <optional>
+#include <string>
 
 #include <mipc/utils.h>
+
+#include "token.h"
 
 namespace wcc {
 
@@ -106,29 +109,35 @@ struct AstFunction {
 };
 
 struct AstStruct {
-  SymbolName name;
-
   using Fields = std::vector<AstVariable>;
 
+  SymbolName name;
   Fields fields;
 };
 
+struct AstStmt;
+
 struct AstFunctionCall {
+  using CallArgs = std::vector<AstStmt>;
+
   SymbolName name;
-
-  using CallArgs = std::vector<AstSymRef>;
-
   CallArgs args;
+
+  // Used to differentiate calls from standard operators, 
+  // because for the latter we might have to fix precedence.
+  Token from_token;
 };
 
 enum class StmtType {
   varref,
   call,
+  ret,
 };
 
 constexpr const char *STMT_TYPE_STR[] = {
     [underlay_cast(StmtType::varref)] = "varref",
     [underlay_cast(StmtType::call)] = "call",
+    [underlay_cast(StmtType::ret)] = "return",
 };
 
 struct AstStmt {
