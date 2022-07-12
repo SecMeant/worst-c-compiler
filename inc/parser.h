@@ -32,6 +32,7 @@ struct Parser
     : tokenizer(std::move(tokenizer))
   {}
 
+  // Performs simple syntax analysis (without semantic analysis)
   AST buildAST();
 
   Tokenizer tokenizer;

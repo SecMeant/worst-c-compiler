@@ -14,7 +14,7 @@ i32 add_twice(i32 a, f32 b) {
 	c = a;
 	d = b;
 
-	ret = a + b + c + d;
+	ret = a + b * c + d;
 
 	return ret;
 }
@@ -22,6 +22,9 @@ i32 add_twice(i32 a, f32 b) {
 i64 global_var;
 
 i32 main() {
-	int b = 3 + 4;
-	int c = add(3,4);
+	i32 b;
+	b = 3 + 4;
+
+	i32 c;
+	c = add(3,4);
 }

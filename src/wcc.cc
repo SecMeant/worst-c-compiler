@@ -55,9 +55,8 @@ tokenizer_main(int argc, char** argv)
   finbuf    f(argv[1]);
   Tokenizer tokenizer(f.begin(), f.size());
   Parser    parser(tokenizer);
-  Token     token;
 
-  Tokenizer::breakpoints.emplace_back(2);
+  //Tokenizer::breakpoints.emplace_back(2);
 
   ast = parser.buildAST();
 

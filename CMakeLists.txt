@@ -1,7 +1,7 @@
 project(wcc CXX)
 cmake_minimum_required(VERSION 3.0)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
@@ -28,8 +28,28 @@ set(INC_DIR inc)
 
 set(CMAKE_CXX_FLAGS "-Wno-c99-designator")
 
-file(GLOB_RECURSE SRC_FILES_CXX ${SRC_DIR}/*.cc)
+set(SRC_FILES_CXX
+    ${SRC_DIR}/tokenizer.cc
+    ${SRC_DIR}/nfa.cc
+    ${SRC_DIR}/parser.cc
+)
 
-add_executable(wcc ${SRC_FILES_CXX})
-target_include_directories(wcc PUBLIC ${INC_DIR})
-target_link_libraries(wcc ${fmt_LIBRARIES} ${mipc_LIBRARIES} spdlog::spdlog)
+add_library(libwcc STATIC ${SRC_FILES_CXX})
+target_include_directories(libwcc PUBLIC ${INC_DIR})
+
+target_link_libraries(
+    libwcc
+    INTERFACE ${fmt_LIBRARIES}
+    INTERFACE ${mipc_LIBRARIES}
+    INTERFACE spdlog::spdlog
+)
+
+add_executable(wcc ${SRC_DIR}/wcc.cc)
+target_link_libraries(wcc libwcc)
+
+add_executable(frontend_test test/run_tests.cc test/operator_precedence_test.cc)
+target_include_directories(frontend_test PUBLIC ${INC_DIR})
+target_link_libraries(frontend_test libwcc)
+add_test(NAME frontend_test COMMAND frontend_test) 
+enable_testing()
+
