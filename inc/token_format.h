@@ -20,10 +20,13 @@ struct fmt::formatter<wcc::Token>
   auto format(const wcc::Token& t, FormatContext& ctx)
   {
 
-    return format_to(ctx.out(),
-                     t.id == wcc::TOKENID::IDENTIFIER ? "Token: {} \"{}\""
-                                                      : "Token: {}",
-                     wcc::TOKENID_STR[mipc::utils::underlay_cast(t.id)],
-                     t.value);
+    return t.id == wcc::TOKENID::IDENTIFIER
+             ? format_to(ctx.out(),
+                         "Token: {} \"{}\"",
+                         wcc::TOKENID_STR[mipc::utils::underlay_cast(t.id)],
+                         t.value)
+             : format_to(ctx.out(),
+                         "Token: {}",
+                         wcc::TOKENID_STR[mipc::utils::underlay_cast(t.id)]);
   }
 };
