@@ -33,7 +33,7 @@ struct fmt::formatter<wcc::AstVariable>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::AstVariable& astvar, FormatContext& ctx)
+  auto format(const wcc::AstVariable& astvar, FormatContext& ctx) const
   {
     // clang-format off
     return format_to(ctx.out(),
@@ -60,7 +60,7 @@ struct fmt::formatter<wcc::AstSymRef>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::AstSymRef& astsymref, FormatContext& ctx)
+  auto format(const wcc::AstSymRef& astsymref, FormatContext& ctx) const
   {
     // clang-format off
     return format_to(ctx.out(),
@@ -83,7 +83,7 @@ struct fmt::formatter<wcc::AstFunctionCall>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::AstFunctionCall& astcall, FormatContext& ctx)
+  auto format(const wcc::AstFunctionCall& astcall, FormatContext& ctx) const
   {
     // clang-format off
     return format_to(ctx.out(),
@@ -108,7 +108,7 @@ struct fmt::formatter<wcc::AstStmt>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::ASTNode::ValueStorage& value, FormatContext& ctx)
+  auto format(const wcc::ASTNode::ValueStorage& value, FormatContext& ctx) const
   {
     auto& aststmt = std::get<wcc::AstStmt>(value);
 
@@ -155,7 +155,7 @@ struct fmt::formatter<wcc::ASTNode::ValueStorage>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::ASTNode::ValueStorage& value, FormatContext& ctx)
+  auto format(const wcc::ASTNode::ValueStorage& value, FormatContext& ctx) const
   {
     if (std::holds_alternative<wcc::AstVariable>(value)) {
 
@@ -213,7 +213,7 @@ struct fmt::formatter<wcc::ASTNode>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::ASTNode& node, FormatContext& ctx)
+  auto format(const wcc::ASTNode& node, FormatContext& ctx) const
   {
     // clang-format off
     return format_to(ctx.out(),
@@ -240,7 +240,7 @@ struct fmt::formatter<wcc::AST>
   }
 
   template<typename FormatContext>
-  auto format(const wcc::AST& ast, FormatContext& ctx)
+  auto format(const wcc::AST& ast, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", ast.root);
   }
