@@ -14,12 +14,18 @@
 
 #include "ast_format.h"
 
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+
+using llvm_context_t = llvm::LLVMContext;
+using llvm_module_t  = llvm::Module;
+
 using namespace wcc;
 // using namespace wcc::regex;
 using namespace mipc::utils;
 using mipc::finbuf;
 
-void
+static void
 usage(int argc, char** argv)
 {}
 
@@ -44,7 +50,7 @@ usage(int argc, char** argv)
 
 AST ast;
 
-int
+static int
 tokenizer_main(int argc, char** argv)
 {
   if (argc != 2) {
@@ -65,11 +71,40 @@ tokenizer_main(int argc, char** argv)
   return 0;
 }
 
+static std::unique_ptr<llvm_context_t> llvm_context;
+static std::unique_ptr<llvm_module_t> llvm_module;
+
+static void init_llvm()
+{
+  llvm_context = std::make_unique<llvm_context_t>();
+  llvm_module = std::make_unique<llvm_module_t>("wcc", *llvm_context);
+}
+
+static int
+gencode()
+{
+  init_llvm();
+
+  return 0;
+}
+
 int
 main(int argc, char** argv)
 {
   spdlog::cfg::load_env_levels();
-  return tokenizer_main(argc, argv);
+
+  const int tokenizer_ret = tokenizer_main(argc, argv);
+  if (tokenizer_ret) {
+    fprintf(stderr, "Tokenizer result non-zero\n");
+    return tokenizer_ret;
+  }
+
+  const int gencode_ret = gencode();
+  if (gencode_ret) {
+    fprintf(stderr, "Code generation result non-zero\n");
+    return gencode_ret;
+  }
+
   // return trie_main(argc, argv);
   // nfa n;
   // n.append('a');

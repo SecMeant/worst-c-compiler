@@ -1,5 +1,5 @@
+cmake_minimum_required(VERSION 3.20.0)
 project(wcc CXX)
-cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,6 +36,7 @@ set(SRC_FILES_CXX
 
 add_library(libwcc STATIC ${SRC_FILES_CXX})
 target_include_directories(libwcc PUBLIC ${INC_DIR})
+add_definitions(-D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS)
 
 target_link_libraries(
     libwcc
@@ -45,7 +46,7 @@ target_link_libraries(
 )
 
 add_executable(wcc ${SRC_DIR}/wcc.cc)
-target_link_libraries(wcc libwcc)
+target_link_libraries(wcc libwcc LLVM-15)
 
 add_executable(frontend_test test/run_tests.cc test/operator_precedence_test.cc)
 target_include_directories(frontend_test PUBLIC ${INC_DIR})
